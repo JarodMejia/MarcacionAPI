@@ -43,13 +43,40 @@ exports.Registro = (req, res, next) => {
     });
 
   db.query(
-    "INSERT INTO `time_att_db`.`Portal_App_token` (Token, Identificacion, Fecha_Hora, Token_Activo) VALUES(?, ?, NOW(), 1);",
-    [req.body.Token, req.body.ID]
-  )
-    .then(([rows, fieldData]) => {
-      rowInsert = rows;
+    "SELECT TIMESTAMPDIFF(MINUTE, Fecha_Hora,NOW()) as fecha FROM time_att_db.Portal_App_token where `Token` =? order by Fecha_Hora desc limit 1;",
+    [req.body.Token]
+  ).then(([rows, fieldData]) => {
+    if (!rows[0]) {
+      db.query(
+        "INSERT INTO `time_att_db`.`Portal_App_token` (Token, Identificacion, Fecha_Hora, Token_Activo) VALUES(?, ?, NOW(), 1);",
+        [req.body.Token, req.body.ID]
+      )
+        .then(([rows, fieldData]) => {
+          rowInsert = rows;
 
-    })
+        })
+        .catch((e) => {
+          console.log("handle error here: ", e.message);
+        });
+    }
+    else {
+      if (rows.fecha > 720) {
+        db.query(
+          "INSERT INTO `time_att_db`.`Portal_App_token` (Token, Identificacion, Fecha_Hora, Token_Activo) VALUES(?, ?, NOW(), 1);",
+          [req.body.Token, req.body.ID]
+        )
+          .then(([rows, fieldData]) => {
+            rowInsert = rows;
+
+          })
+          .catch((e) => {
+            console.log("handle error here: ", e.message);
+          });
+      }
+    }
+
+
+  })
     .catch((e) => {
       console.log("handle error here: ", e.message);
     });
@@ -72,11 +99,11 @@ exports.InicioMarcacion = (req, res, next) => {
   var contador = 0;
   console.log(req.body);
   db.query(
-    "SELECT Token.Identificacion, Empleado.Nombres, Empleado.Apellidos ,Empresa.Nombre,Empresa.Cod_Empresa FROM `time_att_db`.`Portal_App_token` as Token inner join `time_att_db`.`Portal_App_empleado` as Empleado on Token.Identificacion = Empleado.Identificacion inner join `time_att_db`.`Portal_App_empresa` as Empresa on Empleado.Cod_Empresa_id = Empresa.Cod_Empresa where Token.`Token` = ?;",
+    "SELECT Token.Identificacion, Empleado.Nombres, Empleado.Apellidos ,Empresa.Nombre,Empresa.Cod_Empresa FROM `time_att_db`.`Portal_App_token` as Token inner join `time_att_db`.`Portal_App_empleado` as Empleado on Token.Identificacion = Empleado.Identificacion inner join `time_att_db`.`Portal_App_empresa` as Empresa on Empleado.Cod_Empresa_id = Empresa.Cod_Empresa where Token.`Token` = ? and Token.Token_Activo =1;",
     [req.body.Token]
   )
     .then(([row, fieldData]) => {
-      rowInfo=row;
+      rowInfo = row;
       if (!row[0]) {
         iniciomarcacion = 'error'
       } else {
@@ -90,60 +117,60 @@ exports.InicioMarcacion = (req, res, next) => {
               rows.map((entry, index) => {
                 if (entry.DateReg4 !== null) {
                   if (contador < 10) {
-                    rowRegistros.push([(entry.DateReg4).toString().slice(4,15), (entry.TimeReg4).slice(0,8)]);
+                    rowRegistros.push([(entry.DateReg4).toString().slice(4, 15), (entry.TimeReg4).slice(0, 8)]);
                     contador = contador + 1;
                   }
                   if (entry.DateReg3 !== null) {
                     if (contador < 10) {
-                      rowRegistros.push([(entry.DateReg3).toString().slice(4,15), (entry.TimeReg3).slice(0,8)]);
+                      rowRegistros.push([(entry.DateReg3).toString().slice(4, 15), (entry.TimeReg3).slice(0, 8)]);
                       contador = contador + 1;
                     }
                   }
                   if (entry.DateReg2 !== null) {
                     if (contador < 10) {
-                      rowRegistros.push([(entry.DateReg2).toString().slice(4,15), (entry.TimeReg2).slice(0,8)]);
+                      rowRegistros.push([(entry.DateReg2).toString().slice(4, 15), (entry.TimeReg2).slice(0, 8)]);
                       contador = contador + 1;
                     }
                   }
                   if (entry.DateReg1 !== null) {
                     if (contador < 10) {
-                      rowRegistros.push([(entry.DateReg1).toString().slice(4,15), (entry.TimeReg1).slice(0,8)]);
+                      rowRegistros.push([(entry.DateReg1).toString().slice(4, 15), (entry.TimeReg1).slice(0, 8)]);
                       contador = contador + 1;
                     }
                   }
                 } else {
                   if (entry.DateReg3 !== null) {
                     if (contador < 10) {
-                      rowRegistros.push([(entry.DateReg3).toString().slice(4,15), (entry.TimeReg3).slice(0,8)]);
+                      rowRegistros.push([(entry.DateReg3).toString().slice(4, 15), (entry.TimeReg3).slice(0, 8)]);
                       contador = contador + 1;
                     }
                     if (entry.DateReg2 !== null) {
                       if (contador < 10) {
-                        rowRegistros.push([(entry.DateReg2).toString().slice(4,15), (entry.TimeReg2).slice(0,8)]);
+                        rowRegistros.push([(entry.DateReg2).toString().slice(4, 15), (entry.TimeReg2).slice(0, 8)]);
                         contador = contador + 1;
                       }
                     }
                     if (entry.DateReg1 !== null) {
                       if (contador < 10) {
-                        rowRegistros.push([(entry.DateReg1).toString().slice(4,15), (entry.TimeReg1).slice(0,8)]);
+                        rowRegistros.push([(entry.DateReg1).toString().slice(4, 15), (entry.TimeReg1).slice(0, 8)]);
                         contador = contador + 1;
                       }
                     }
                   } else {
                     if (entry.DateReg2 !== null) {
                       if (contador < 10) {
-                        rowRegistros.push([(entry.DateReg2).toString().slice(4,15), (entry.TimeReg2).slice(0,8)]);
+                        rowRegistros.push([(entry.DateReg2).toString().slice(4, 15), (entry.TimeReg2).slice(0, 8)]);
                         contador = contador + 1;
                       }
                       if (entry.DateReg1 !== null) {
                         if (contador < 10) {
-                          rowRegistros.push([(entry.DateReg1).toString().slice(4,15), (entry.TimeReg1).slice(0,8)]);
+                          rowRegistros.push([(entry.DateReg1).toString().slice(4, 15), (entry.TimeReg1).slice(0, 8)]);
                           contador = contador + 1;
                         }
                       }
                     } else {
                       if (contador < 10) {
-                        rowRegistros.push([(entry.DateReg1).toString().slice(4,15), (entry.TimeReg1).slice(0,8)]);
+                        rowRegistros.push([(entry.DateReg1).toString().slice(4, 15), (entry.TimeReg1).slice(0, 8)]);
                         contador = contador + 1;
                       }
                     }
@@ -162,11 +189,11 @@ exports.InicioMarcacion = (req, res, next) => {
     });
 
   setTimeout(() => {
-    if (iniciomarcacion==="error") {
+    if (iniciomarcacion === "error") {
       res.status(200).json("Error");
     } else {
       console.log(rowRegistros);
-      res.status(200).json([rowInfo[0],rowRegistros]);
+      res.status(200).json([rowInfo[0], rowRegistros]);
     }
   }, 1000); // se establece un timeout de 1 segundo en el que si se cumple un segundo y no hay llegado datos se manda un mensaje de no hay datos
 };
@@ -355,7 +382,6 @@ exports.Marcacion = (req, res, next) => {
 
 exports.Desactivacion = (req, res, next) => {
   var row = [];
-  console.log(req.body);
   db.query(
     "UPDATE `time_att_db`.`Portal_App_token` SET `Token_Activo`=0 WHERE `Token`=?;",
     [req.body.Token]
